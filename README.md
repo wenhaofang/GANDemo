@@ -23,3 +23,20 @@ PYTHONPATH=. python loaders/loader1.py
 # GAN
 PYTHONPATH=. python modules/module1.py
 ```
+
+### Main Process
+
+```shell
+python main.py
+```
+
+You can change the config either in the command line or in the file `utils/parser.py`
+
+Here are the examples for each module:
+
+```shell
+# module1
+python main.py \
+    --name 1 \
+    --module 1
+```
