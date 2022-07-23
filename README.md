@@ -13,5 +13,13 @@ Datasets:
 * for loaders
 
 ```shell
+# MNIST
 PYTHONPATH=. python loaders/loader1.py
+```
+
+* for modules
+
+```shell
+# GAN
+PYTHONPATH=. python modules/module1.py
 ```

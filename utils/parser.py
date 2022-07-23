@@ -9,6 +9,11 @@ def get_parser():
     # For Loader
     parser.add_argument('--path', default = 'data', help = '')
 
+    # For Module
+    parser.add_argument('--dis_layers_size', type = list, default = [784, 256, 256, 1], help = '')
+    parser.add_argument('--gen_layers_size', type = list, default = [256, 256, 784], help = '')
+    parser.add_argument('--gen_latent_size', type = int, default = 64, help = '')
+
     # For Train
     parser.add_argument('--batch_size', type = int, default = 64, help = '')
     parser.add_argument('--num_epochs', type = int, default = 10, help = '')
