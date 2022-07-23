@@ -23,14 +23,14 @@ class Dis(nn.Module):
                 name = 'd_l_{}'.format(layer_i), module = nn.Linear(i_size, o_size)
             )
             self.dis.add_module(
-                name = 'd_a_{}'.format(layer_i), module = nn.LeakyReLU(0.2) if layer_i + 1 < len(layers_size) else nn.Sigmoid()
+                name = 'd_a_{}'.format(layer_i), module = nn.LeakyReLU(0.2) if layer_i + 2 < len(layers_size) else nn.Sigmoid()
             )
 
     def forward(self,x):
 
-        x = self.dis(x).squeeze()
+        y = self.dis(x).squeeze()
 
-        return x
+        return y
 
 class Gen(nn.Module):
     def __init__(
@@ -56,9 +56,9 @@ class Gen(nn.Module):
                 name = 'g_a_{}'.format(layer_i), module = nn.ReLU() if layer_i + 1 < len(layers_size) else nn.Tanh()
             )
 
-    def forward(self,x):
+    def forward(self,z):
 
-        x = self.gen(x)
+        x = self.gen(z)
 
         return x
 
