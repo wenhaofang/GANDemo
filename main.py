@@ -46,6 +46,7 @@ from loaders.loader1 import get_loader as get_loader1 # MNIST
 
 from modules.module1 import get_module as get_module1 # GAN
 from modules.module2 import get_module as get_module2 # WGAN
+from modules.module3 import get_module as get_module3 # WGAN-GP
 
 from utils.misc import train, valid, save_checkpoint, load_checkpoint, save_sample
 
@@ -59,14 +60,20 @@ logger.info('prepare module')
 
 module = get_module1(option).to(device) if option.module == 1 else \
          get_module2(option).to(device) if option.module == 2 else \
+         get_module3(option).to(device) if option.module == 3 else \
          None
 
 logger.info('prepare envs')
 
-if  option.module == 1:
+if  (
+    option.module == 1
+):
     optimizerD = optim.Adam(module.dis.parameters(), lr = option.lr)
     optimizerG = optim.Adam(module.gen.parameters(), lr = option.lr)
-if option.module == 2:
+if  (
+    option.module == 2 or
+    option.module == 3
+):
     optimizerD = optim.RMSprop(module.dis.parameters(), lr = option.lr)
     optimizerG = optim.RMSprop(module.gen.parameters(), lr = option.lr)
 
@@ -75,7 +82,7 @@ criterion = nn.BCELoss()
 logger.info('start training!')
 
 for epoch in range(1, 1 + option.num_epochs):
-    train_info = train(module, option.module, device, option.gen_latent_size, loader, criterion, optimizerD, optimizerG, option.train_d_freq, option.train_g_freq, option.clip_params)
+    train_info = train(module, option.module, device, option.gen_latent_size, loader, criterion, optimizerD, optimizerG, option.train_d_freq, option.train_g_freq, option.clip_params, option.weight_gp)
     valid_info = valid(module, option.module, device, option.gen_latent_size, option.num_labels)
     logger.info(
         '[Epoch %d] Train D Loss: %.4f, Train G Loss: %.4f' % ( epoch , train_info['train_d_loss'] , train_info['train_g_loss'] )

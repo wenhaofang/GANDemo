@@ -4,7 +4,7 @@ import torch
 from torchvision.utils import make_grid
 from torchvision.utils import save_image
 
-def train(module, module_id, device, latent_size, loader, criterion, optimizerD, optimizerG, train_d_freq, train_g_freq, clip_params):
+def train(module, module_id, device, latent_size, loader, criterion, optimizerD, optimizerG, train_d_freq, train_g_freq, clip_params, weight_gp):
 
     train_d_loss = []
     train_g_loss = []
@@ -42,15 +42,43 @@ def train(module, module_id, device, latent_size, loader, criterion, optimizerD,
                 fake_loss_d = criterion(fake_output, fake_target)
                 loss_d = (real_loss_d + fake_loss_d) / 2
             if  (
-                module_id == 2
+                module_id == 2 or
+                module_id == 3
             ):
                 loss_d = - torch.mean(real_output) + torch.mean(fake_output)
+
+            if  (
+                module_id == 3
+            ):
+                alpha = torch.rand(image.shape[0], 1, 1, 1).to(device)
+
+                source = (
+                    real_source * (alpha) +
+                    fake_source * (1 - alpha)
+                )
+                output = module.dis(source)
+                target = torch.ones(output.shape).to(device)
+
+                gradients = torch.autograd.grad(
+                    outputs = output,
+                    inputs  = source,
+                    grad_outputs = target,
+                    create_graph = True,
+                    retain_graph = True,
+                    only_inputs  = True,
+                )[0].view(image.shape[0], -1)
+
+                penalties = ((gradients.norm(2, 1) - 1) ** 2).mean()
+
+                loss_d += weight_gp * penalties
 
             optimizerD.zero_grad()
             loss_d.backward()
             optimizerD.step()
 
-            if  module_id == 2:
+            if  (
+                module_id == 2
+            ):
                 for p in module.dis.parameters():
                     p.data.clamp_(
                         -clip_params,
@@ -81,7 +109,8 @@ def train(module, module_id, device, latent_size, loader, criterion, optimizerD,
             ):
                 loss_g = criterion(fake_output, real_target)
             if  (
-                module_id == 2
+                module_id == 2 or
+                module_id == 3
             ):
                 loss_g = - torch.mean(fake_output)
 
