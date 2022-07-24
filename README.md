@@ -8,6 +8,12 @@ Datasets:
 
 * `dataset1`: [MNIST](http://yann.lecun.com/exdb/mnist/)
 
+Models:
+
+* `model1`: GAN
+
+* `model2`: WGAN
+
 ### Unit Test
 
 * for loaders
@@ -22,6 +28,8 @@ PYTHONPATH=. python loaders/loader1.py
 ```shell
 # GAN
 PYTHONPATH=. python modules/module1.py
+# WGAN
+PYTHONPATH=. python modules/module2.py
 ```
 
 ### Main Process
@@ -39,4 +47,11 @@ Here are the examples for each module:
 python main.py \
     --name 1 \
     --module 1
+```
+
+```shell
+# module2
+python main.py \
+    --name 2 \
+    --module 2
 ```

@@ -4,7 +4,7 @@ import torch
 from torchvision.utils import make_grid
 from torchvision.utils import save_image
 
-def train(module, device, latent_size, loader, criterion, optimizerD, optimizerG, train_d_freq, train_g_freq):
+def train(module, module_id, device, latent_size, loader, criterion, optimizerD, optimizerG, train_d_freq, train_g_freq, clip_params):
 
     train_d_loss = []
     train_g_loss = []
@@ -35,14 +35,27 @@ def train(module, device, latent_size, loader, criterion, optimizerD, optimizerG
             real_output = module.dis(real_source)
             fake_output = module.dis(fake_source)
 
-            real_loss_d = criterion(real_output, real_target)
-            fake_loss_d = criterion(fake_output, fake_target)
-
-            loss_d = (real_loss_d + fake_loss_d) / 2
+            if  (
+                module_id == 1
+            ):
+                real_loss_d = criterion(real_output, real_target)
+                fake_loss_d = criterion(fake_output, fake_target)
+                loss_d = (real_loss_d + fake_loss_d) / 2
+            if  (
+                module_id == 2
+            ):
+                loss_d = - torch.mean(real_output) + torch.mean(fake_output)
 
             optimizerD.zero_grad()
             loss_d.backward()
             optimizerD.step()
+
+            if  module_id == 2:
+                for p in module.dis.parameters():
+                    p.data.clamp_(
+                        -clip_params,
+                        +clip_params,
+                    )
 
             train_d_loss.append(loss_d.item())
 
@@ -63,7 +76,14 @@ def train(module, device, latent_size, loader, criterion, optimizerD, optimizerG
 
             fake_output = module.dis(fake_source)
 
-            loss_g = criterion(fake_output, real_target)
+            if  (
+                module_id == 1
+            ):
+                loss_g = criterion(fake_output, real_target)
+            if  (
+                module_id == 2
+            ):
+                loss_g = - torch.mean(fake_output)
 
             optimizerG.zero_grad()
             loss_g.backward()
@@ -76,7 +96,7 @@ def train(module, device, latent_size, loader, criterion, optimizerD, optimizerG
         'train_g_loss': sum(train_g_loss) / len(train_g_loss),
     }
 
-def valid(module, device, latent_size, number):
+def valid(module, module_id, device, latent_size, number):
 
     module.gen.eval()
     module.dis.eval()

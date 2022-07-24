@@ -15,7 +15,7 @@ def get_parser():
     parser.add_argument('--gen_latent_size', type = int, default = 64, help = '')
 
     # For Train
-    parser.add_argument('--module', type = int, choices = range(1, 2), default = 1, help = '')
+    parser.add_argument('--module', type = int, choices = range(1, 3), default = 1, help = '')
 
     parser.add_argument('--batch_size', type = int, default = 128, help = '')
     parser.add_argument('--num_epochs', type = int, default = 100, help = '')
@@ -29,5 +29,7 @@ def get_parser():
     parser.add_argument('--train_g_freq', type = int, default = 1, help = '')
 
     parser.add_argument('--lr', type = float, default = 0.0002, help = '')
+
+    parser.add_argument('--clip_params', type = float, default = 0.01, help = '')
 
     return parser
