@@ -23,9 +23,9 @@ def get_parser():
     parser.add_argument('--num_labels', type = int, default = 10, help = '')
 
     parser.add_argument('--saved_s_freq', type = int, default = 1, help = '')
-    parser.add_argument('--saved_m_freq', type = int, default = 10, help = '')
+    parser.add_argument('--saved_m_freq', type = int, default = 5, help = '')
 
-    parser.add_argument('--train_d_freq', type = int, default = 10, help = '')
+    parser.add_argument('--train_d_freq', type = int, default = 1, help = '')
     parser.add_argument('--train_g_freq', type = int, default = 1, help = '')
 
     parser.add_argument('--lr', type = float, default = 0.0002, help = '')
