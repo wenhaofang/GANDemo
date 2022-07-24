@@ -4,8 +4,11 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 
 def get_loader(option):
-    vi_dataset = datasets.MNIST(root = option.path, train = True, transform = transforms.ToTensor(), download = True)
-    dataloader = DataLoader(dataset = vi_dataset, batch_size = option.batch_size, shuffle = True)
+    dataset = datasets.MNIST(root = option.path, train = True, download = True, transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean = [0.5], std = [0.5]),
+    ]))
+    dataloader = DataLoader(dataset = dataset, batch_size = option.batch_size, shuffle = True)
 
     return dataloader
 

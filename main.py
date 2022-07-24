@@ -46,7 +46,7 @@ from loaders.loader1 import get_loader as get_loader1 # MNIST
 
 from modules.module1 import get_module as get_module1 # GAN
 
-from utils.misc import train_d, train_g, save_checkpoint, load_checkpoint, save_sample
+from utils.misc import train, valid, save_checkpoint, load_checkpoint, save_sample
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -61,32 +61,20 @@ module = get_module1(option).to(device) if option.module == 1 else \
 
 logger.info('prepare envs')
 
-optimizerD = optim.Adam(module.dis.parameters(), lr = option.learning_rate)
-optimizerG = optim.Adam(module.gen.parameters(), lr = option.learning_rate)
+optimizerD = optim.Adam(module.dis.parameters(), lr = option.lr)
+optimizerG = optim.Adam(module.gen.parameters(), lr = option.lr)
 
 criterion = nn.BCELoss()
 
 logger.info('start training!')
 
 for epoch in range(1, 1 + option.num_epochs):
-
-    print_a_fstr = '[Epoch {:d}]'.format(epoch)
-    train_d_fstr = ''
-    train_g_fstr = ''
-
-    if  epoch % option.train_d_freq == 0:
-        train_d_info = train_d(module, loader, criterion, optimizerD, device, option.gen_latent_size, option.num_labels)
-        train_d_fstr = 'TrainD Loss: {:.4f}'.format(train_d_info['loss'])
-    if  epoch % option.train_g_freq == 0:
-        train_g_info = train_g(module, loader, criterion, optimizerG, device, option.gen_latent_size, option.num_labels)
-        train_g_fstr = 'TrainG Loss: {:.4f}'.format(train_g_info['loss'])
-
-        save_sample(os.path.join(  sample_folder, str(epoch) + '.png'), train_g_info['fake_images'])
+    train_info = train(module, device, option.gen_latent_size, loader, criterion, optimizerD, optimizerG, option.train_d_freq, option.train_g_freq)
+    valid_info = valid(module, device, option.gen_latent_size, option.num_labels)
+    logger.info(
+        '[Epoch %d] Train D Loss: %.4f, Train G Loss: %.4f' % ( epoch , train_info['train_d_loss'] , train_info['train_g_loss'] )
+    )
+    if  epoch % option.saved_s_freq == 0:
+        save_sample(os.path.join(  sample_folder, str(epoch) + '.png'), valid_info['fake_images'])
+    if  epoch % option.saved_m_freq == 0:
         save_checkpoint(os.path.join(save_folder, str(epoch) + '.pth'), module, optimizerD, optimizerG, epoch)
-
-    if  train_d_fstr != '':
-        print_a_fstr += ' ' + train_d_fstr
-    if  train_g_fstr != '':
-        print_a_fstr += ' ' + train_g_fstr
-
-    logger.info(print_a_fstr)

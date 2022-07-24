@@ -4,89 +4,91 @@ import torch
 from torchvision.utils import make_grid
 from torchvision.utils import save_image
 
-def train_d(module, loader, criterion, optimizerD, device, latent_size, number):
-    '''
-    Fix Generator, Train Discriminator
-    '''
-    module.gen.eval()
-    module.dis.train()
-    epoch_loss = 0.0
+def train(module, device, latent_size, loader, criterion, optimizerD, optimizerG, train_d_freq, train_g_freq):
 
-    for mini_batch in tqdm.tqdm(loader):
+    train_d_loss = []
+    train_g_loss = []
+
+    for step, mini_batch in enumerate(tqdm.tqdm(loader)):
+
         image , label = mini_batch
         image = image.to(device).view(image.shape[0], 1 * 28 * 28)
         label = label.to(device)
 
-        real_target = torch.ones (image.shape[0]).to(device)
-        fake_target = torch.zeros(image.shape[0]).to(device)
+        for _ in range(train_d_freq):
 
-        z = torch.randn((image.shape[0], latent_size)).to(device)
+            # =================
+            # Fix Generator, Train Discriminator
+            # =================
 
-        real_source = image
-        fake_source = module.gen(z)
+            module.gen.eval()
+            module.dis.train()
 
-        real_output = module.dis(real_source)
-        fake_output = module.dis(fake_source)
+            z = torch.randn((image.shape[0], latent_size)).to(device)
 
-        real_loss_d = criterion(real_output, real_target)
-        fake_loss_d = criterion(fake_output, fake_target)
+            real_target = torch.ones (image.shape[0]).to(device)
+            fake_target = torch.zeros(image.shape[0]).to(device)
 
-        loss_d = (real_loss_d + fake_loss_d) / 2
+            real_source = image
+            fake_source = module.gen(z)
 
-        optimizerD.zero_grad()
-        loss_d.backward()
-        optimizerD.step()
+            real_output = module.dis(real_source)
+            fake_output = module.dis(fake_source)
 
-        epoch_loss += loss_d.item()
+            real_loss_d = criterion(real_output, real_target)
+            fake_loss_d = criterion(fake_output, fake_target)
+
+            loss_d = (real_loss_d + fake_loss_d) / 2
+
+            optimizerD.zero_grad()
+            loss_d.backward()
+            optimizerD.step()
+
+            train_d_loss.append(loss_d.item())
+
+        for _ in range(train_g_freq):
+
+            # =================
+            # Fix Discriminator, Train Generator
+            # =================
+
+            module.dis.eval()
+            module.gen.train()
+
+            z = torch.randn((image.shape[0], latent_size)).to(device)
+
+            real_target = torch.ones(image.shape[0]).to(device)
+
+            fake_source = module.gen(z)
+
+            fake_output = module.dis(fake_source)
+
+            loss_g = criterion(fake_output, real_target)
+
+            optimizerG.zero_grad()
+            loss_g.backward()
+            optimizerG.step()
+
+            train_g_loss.append(loss_g.item())
 
     return {
-        'loss': epoch_loss / len(loader)
+        'train_d_loss': sum(train_d_loss) / len(train_d_loss),
+        'train_g_loss': sum(train_g_loss) / len(train_g_loss),
     }
 
-def train_g(module, loader, criterion, optimizerG, device, latent_size, number):
-    '''
-    Fix Discriminator, Train Generator
-    '''
+def valid(module, device, latent_size, number):
+
+    module.gen.eval()
     module.dis.eval()
-    module.gen.train()
-    epoch_loss = 0.0
-    true_images = []
-    fake_images = []
 
-    for mini_batch in tqdm.tqdm(loader):
-        image , label = mini_batch
-        image = image.to(device).view(image.shape[0], 1 * 28 * 28)
-        label = label.to(device)
+    z = torch.randn((number, latent_size)).to(device)
 
-        real_target = torch.ones (image.shape[0]).to(device)
+    fake_images = module.gen(z)
 
-        z = torch.randn((image.shape[0], latent_size)).to(device)
-
-        fake_source = module.gen(z)
-
-        fake_output = module.dis(fake_source)
-
-        loss_g = criterion(fake_output, real_target)
-
-        optimizerG.zero_grad()
-        loss_g.backward()
-        optimizerG.step()
-
-        epoch_loss += loss_g.item()
-        true_images.append(image)
-        fake_images.append(fake_source)
-
-    true_images = torch.cat(true_images, dim = 0)
-    fake_images = torch.cat(fake_images, dim = 0)
-    true_images = true_images.view(true_images.shape[0], 1, 28, 28)
-    fake_images = fake_images.view(fake_images.shape[0], 1, 28, 28)
-    true_images = true_images[:number]
-    fake_images = fake_images[:number]
+    fake_images = fake_images.view(number, 1, 28, 28)
 
     return {
-        'loss': epoch_loss / len(loader),
-        'true_images': true_images,
-        'fake_images': fake_images,
+        'fake_images': fake_images
     }
 
 def save_checkpoint(save_path, module, optimD, optimG, epoch):
