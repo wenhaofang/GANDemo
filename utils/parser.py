@@ -10,12 +10,12 @@ def get_parser():
     parser.add_argument('--path', default = 'data', help = '')
 
     # For Module
-    parser.add_argument('--dis_layers_size', type = list, default = [784, 512, 256, 1], help = '')
+    parser.add_argument('--dis_layers_size', type = list, default = [784, 512, 256], help = '')
     parser.add_argument('--gen_layers_size', type = list, default = [256, 512, 784], help = '')
     parser.add_argument('--gen_latent_size', type = int, default = 64, help = '')
 
     # For Train
-    parser.add_argument('--module', type = int, choices = range(1, 4), default = 1, help = '')
+    parser.add_argument('--module', type = int, choices = range(1, 5), default = 1, help = '')
 
     parser.add_argument('--batch_size', type = int, default = 128, help = '')
     parser.add_argument('--num_epochs', type = int, default = 100, help = '')

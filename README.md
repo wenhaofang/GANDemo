@@ -16,6 +16,8 @@ Models:
 
 * `model3`: WGAN-GP
 
+* `model4`: CGAN
+
 ### Unit Test
 
 * for loaders
@@ -34,6 +36,8 @@ PYTHONPATH=. python modules/module1.py
 PYTHONPATH=. python modules/module2.py
 # WGAN-GP
 PYTHONPATH=. python modules/module3.py
+# CGAN
+PYTHONPATH=. python modules/module4.py
 ```
 
 ### Main Process
@@ -65,4 +69,11 @@ python main.py \
 python main.py \
     --name 3 \
     --module 3
+```
+
+```shell
+# module4
+python main.py \
+    --name 4 \
+    --module 4
 ```

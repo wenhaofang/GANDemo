@@ -22,10 +22,14 @@ class Dis(nn.Module):
             self.dis.add_module(
                 name = 'd_l_{}'.format(layer_i), module = nn.Linear(i_size, o_size)
             )
-            if  layer_i + 2 < len(layers_size): # diff: remove the last Sigmoid
-                self.dis.add_module(
-                    name = 'd_a_{}'.format(layer_i), module = nn.LeakyReLU(0.2)
-                )
+            self.dis.add_module(
+                name = 'd_a_{}'.format(layer_i), module = nn.LeakyReLU(0.2)
+            )
+
+        self.dis.add_module(
+            name = 'd_l_{}'.format(len(layers_size) - 1), module = nn.Linear(layers_size[-1], 1)
+        )
+        # diff: can not use Sigmoid
 
     def forward(self,x):
 
@@ -59,7 +63,7 @@ class Gen(nn.Module):
 
     def forward(self,z):
 
-        x = self.gen(z)
+        x = self.gen(z).squeeze()
 
         return x
 

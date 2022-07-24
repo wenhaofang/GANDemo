@@ -4,7 +4,7 @@ import torch
 from torchvision.utils import make_grid
 from torchvision.utils import save_image
 
-def train(module, module_id, device, latent_size, loader, criterion, optimizerD, optimizerG, train_d_freq, train_g_freq, clip_params, weight_gp):
+def train(module, module_id, device, latent_size, number, loader, criterion, optimizerD, optimizerG, train_d_freq, train_g_freq, clip_params, weight_gp):
 
     train_d_loss = []
     train_g_loss = []
@@ -26,17 +26,34 @@ def train(module, module_id, device, latent_size, loader, criterion, optimizerD,
 
             z = torch.randn((image.shape[0], latent_size)).to(device)
 
+            c = torch.randint(0,number, (image.shape[0],)).to(device)
+
             real_target = torch.ones (image.shape[0]).to(device)
             fake_target = torch.zeros(image.shape[0]).to(device)
 
-            real_source = image
-            fake_source = module.gen(z)
-
-            real_output = module.dis(real_source)
-            fake_output = module.dis(fake_source)
+            real_labels = to_onehot(label, number)
+            fake_lebels = to_onehot(c, number)
 
             if  (
-                module_id == 1
+                module_id == 1 or
+                module_id == 2 or
+                module_id == 3
+            ):
+                real_source = image
+                fake_source = module.gen(z)
+                real_output = module.dis(real_source)
+                fake_output = module.dis(fake_source)
+            if  (
+                module_id == 4
+            ):
+                real_source = image
+                fake_source = module.gen(z, fake_lebels)
+                real_output = module.dis(real_source, real_labels)
+                fake_output = module.dis(fake_source, fake_lebels)
+
+            if  (
+                module_id == 1 or
+                module_id == 4
             ):
                 real_loss_d = criterion(real_output, real_target)
                 fake_loss_d = criterion(fake_output, fake_target)
@@ -98,14 +115,28 @@ def train(module, module_id, device, latent_size, loader, criterion, optimizerD,
 
             z = torch.randn((image.shape[0], latent_size)).to(device)
 
+            c = torch.randint(0,number, (image.shape[0],)).to(device)
+
             real_target = torch.ones(image.shape[0]).to(device)
 
-            fake_source = module.gen(z)
-
-            fake_output = module.dis(fake_source)
+            fake_lebels = to_onehot(c, number)
 
             if  (
-                module_id == 1
+                module_id == 1 or
+                module_id == 2 or
+                module_id == 3
+            ):
+                fake_source = module.gen(z)
+                fake_output = module.dis(fake_source)
+            if  (
+                module_id == 4
+            ):
+                fake_source = module.gen(z, fake_lebels)
+                fake_output = module.dis(fake_source, fake_lebels)
+
+            if  (
+                module_id == 1 or
+                module_id == 4
             ):
                 loss_g = criterion(fake_output, real_target)
             if  (
@@ -132,9 +163,20 @@ def valid(module, module_id, device, latent_size, number):
 
     z = torch.randn((number, latent_size)).to(device)
 
-    fake_images = module.gen(z)
+    c = torch.arange(number).to(device)
 
-    fake_images = fake_images.view(number, 1, 28, 28)
+    if  (
+        module_id == 1 or
+        module_id == 2 or
+        module_id == 3
+    ):
+        fake_images = module.gen(z)
+        fake_images = fake_images.view(number, 1, 28, 28)
+    if  (
+        module_id == 4
+    ):
+        fake_images = module.gen(z, to_onehot(c, number))
+        fake_images = fake_images.view(number, 1, 28, 28)
 
     return {
         'fake_images': fake_images
@@ -158,3 +200,8 @@ def load_checkpoint(load_path, module, optimD, optimG):
 
 def save_sample(save_path, samples):
     save_image (make_grid (samples.cpu(), nrow = 5, normalize = True).detach(), save_path)
+
+def to_onehot(i , n):
+    if  i.dim() == 1:
+        i = i.unsqueeze(1)
+    return torch.zeros((i.shape[0], n), device = i.device).scatter(1, i, 1)
