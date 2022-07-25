@@ -77,3 +77,22 @@ python main.py \
     --name 4 \
     --module 4
 ```
+
+### Note (重点、难点、疑点、TODO、...)
+
+1、WGAN 和 GAN 的区别
+
+* Discriminator 去掉最后一层 Sigmoid
+* Optimizer 不使用基于动量的算法，推荐使用 RMSProp、SGD
+* Optimizer 更新参数后，将 Discriminator 的参数截断为固定常数的绝对值
+* Criterion 计算 loss 不取 log
+
+2、WGAN-GP 和 WGAN 的区别
+
+* 将参数截断替换为梯度惩罚
+
+3、关于 CGAN
+
+* 对于 Discriminator，输入图片加标签，判断是否为真实图片 (二分类)
+* 对于 Discriminator，判断：真图片加真标签 (1)，假图片加假标签 (0)
+
